@@ -1,113 +1,141 @@
-import Image from "next/image";
+"use client"
 
-export default function Home() {
+import React, { useState, useMemo, useCallback } from 'react'
+import dynamic from 'next/dynamic'
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+
+// Dynamically import the Graph component
+const Graph = dynamic(() => import('@/components/ui/graph'), {
+  ssr: false,
+  loading: () => <p>Loading graph...</p>
+})
+
+// Type to represent a document
+type Document = {
+  id: string
+  title: string
+  tags: string[]
+  content: string
+}
+
+// Sample documents
+const sampleDocuments: Document[] = [
+  { id: '1', title: 'Document 1', tags: ['important', 'work'], content: 'Content of document 1' },
+  { id: '2', title: 'Document 2', tags: ['personal', 'finance'], content: 'Content of document 2' },
+  { id: '3', title: 'Document 3', tags: ['work', 'project'], content: 'Content of document 3' },
+  { id: '4', title: 'Document 4', tags: ['important', 'personal'], content: 'Content of document 4' },
+  { id: '5', title: 'Document 5', tags: ['finance', 'work'], content: 'Content of document 5' },
+  { id: '6', title: 'Document 6', tags: ['finance', 'work'], content: 'Content of document 5' },
+  { id: '7', title: 'Document 7', tags: ['finance', 'work'], content: 'Content of document 5' },
+  { id: '8', title: 'Document 8', tags: ['finance', 'work'], content: 'Content of document 5' },
+  { id: '9', title: 'Document 9', tags: ['finance', 'work'], content: 'Content of document 5' },
+]
+
+export default function DocViewer() {
+  const [documents] = useState<Document[]>(sampleDocuments)
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [sortMethod, setSortMethod] = useState<string>('title')
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
+  const [searchQuery, setSearchQuery] = useState<string>('')
+
+  const filteredAndSortedDocuments = useMemo(() => {
+    let filtered = documents
+    if (selectedTags.length > 0) {
+      filtered = filtered.filter(doc =>
+        selectedTags.every(tag => doc.tags.includes(tag))
+      )
+    }
+    if (searchQuery) {
+      filtered = filtered.filter(doc =>
+        doc.title.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    }
+    return filtered.sort((a, b) => {
+      if (sortMethod === 'title') {
+        return a.title.localeCompare(b.title)
+      } else if (sortMethod === 'tagCount') {
+        return b.tags.length - a.tags.length
+      }
+      return 0
+    })
+  }, [documents, selectedTags, sortMethod, searchQuery])
+
+  const allTags = useMemo(() => {
+    const tags = new Set<string>()
+    documents.forEach(doc => doc.tags.forEach(tag => tags.add(tag)))
+    return Array.from(tags)
+  }, [documents])
+
+  const handleTagToggle = useCallback((tag: string) => {
+    setSelectedTags(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    )
+  }, [])
+
+  const handleNodeClick = useCallback((nodeId: string) => {
+    const selected = documents.find(doc => doc.id === nodeId)
+    setSelectedDocument(selected || null)
+  }, [documents])
+
+  const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value)
+  }, [])
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <div className="flex flex-col h-screen w-screen">
+      <div className="flex flex-col gap-4 p-4 bg-gray-100">
+        <div className="flex justify-between items-center w-48">
+          <Input
+            type="text"
+            placeholder="Search documents..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            className="w-64"
+          />
+          <Select value={sortMethod} onValueChange={setSortMethod}>
+            <SelectTrigger className="w-12">
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="title">Sort by Title</SelectItem>
+              <SelectItem value="tagCount">Sort by Tag Count</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          {allTags.map(tag => (
+            <Button
+              key={tag}
+              variant={selectedTags.includes(tag) ? "default" : "outline"}
+              onClick={() => handleTagToggle(tag)}
+              className="mb-2"
+            >
+              {tag}
+            </Button>
+          ))}
         </div>
       </div>
-
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+      <div className="flex-grow w-full">
+        <Graph
+          documents={filteredAndSortedDocuments}
+          onNodeClick={handleNodeClick}
         />
       </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  );
+      {selectedDocument && (
+        <Dialog open={!!selectedDocument} onOpenChange={() => setSelectedDocument(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{selectedDocument.title}</DialogTitle>
+            </DialogHeader>
+            <div className="mt-2">
+              <p><strong>Tags:</strong> {selectedDocument.tags.join(', ')}</p>
+              <p><strong>Content:</strong> {selectedDocument.content}</p>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  )
 }
