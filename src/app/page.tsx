@@ -1,11 +1,12 @@
 "use client"
 
-import React, { useState, useMemo, useCallback } from 'react'
+import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
+import { toast } from '@/hooks/use-toast'
 
 // Dynamically import the Graph component
 const Graph = dynamic(() => import('@/components/ui/graph'), {
@@ -35,11 +36,35 @@ const sampleDocuments: Document[] = [
 ]
 
 export default function DocViewer() {
-  const [documents] = useState<Document[]>(sampleDocuments)
+  const [documents, setDocuments] = useState<Document[]>(sampleDocuments)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [sortMethod, setSortMethod] = useState<string>('title')
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
   const [searchQuery, setSearchQuery] = useState<string>('')
+
+
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      try {
+        const response = await fetch('/api/doc');
+        if (!response.ok) {
+          throw new Error('Failed to fetch documents');
+        }
+
+        const data = await response.json();
+        setDocuments(data);
+      } catch (error) {
+        console.error(error);
+        toast({
+          title: "Error",
+          description: `Erro ao carregar documentos`,
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchDocuments();
+  }, []);
 
   const filteredAndSortedDocuments = useMemo(() => {
     let filtered = documents
@@ -129,9 +154,14 @@ export default function DocViewer() {
             <DialogHeader>
               <DialogTitle>{selectedDocument.title}</DialogTitle>
             </DialogHeader>
-            <div className="mt-2">
+            <div className="mt-2 w-full overflow-auto">
+              <p><strong>Titulo:</strong> {selectedDocument.title}</p>
               <p><strong>Tags:</strong> {selectedDocument.tags.join(', ')}</p>
               <p><strong>Content:</strong> {selectedDocument.content}</p>
+              <p><strong>Autor:</strong> {selectedDocument.author}</p>
+              <p><strong>Localização:</strong> {selectedDocument.location}</p>
+              <p><strong>Data:</strong> {selectedDocument.date}</p>
+              <p><strong>Drive:</strong> {selectedDocument.driveLink}</p>
             </div>
           </DialogContent>
         </Dialog>
