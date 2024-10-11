@@ -181,9 +181,3 @@ export async function DELETE(req: Request) {
         return NextResponse.json({ message: 'Erro ao remover o documento', error: error.message }, { status: 500 });
     }
 }
-
-export const config = {
-    api: {
-        bodyParser: false,
-    },
-};
