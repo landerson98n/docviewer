@@ -183,7 +183,8 @@ export default function AdminPage() {
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    style={{ backgroundColor: autumnColors.background, color: autumnColors.text }}
+                                    style={{ backgroundColor: autumnColors.background, color: autumnColors.secondary }}
+                                
                                 />
                             </div>
                             <Button onClick={handleLogin} className="w-full" style={{ backgroundColor: autumnColors.primary, color: autumnColors.background }}>Login</Button>
