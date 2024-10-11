@@ -14,7 +14,7 @@ import { ScrollArea } from '@radix-ui/react-scroll-area'
 type Document = {
     id: string
     title: string
-    author: string
+    author: string[]
     location: string
     date: string
     tags: string[]
@@ -22,7 +22,7 @@ type Document = {
     file: File
 }
 
-export default function DocumentUploader() {
+export default function DocumentUploader({setUpdateDocs}) {
     const [documents, setDocuments] = useState<Document[]>([])
     const [uploading, setUploading] = useState(false)
     const [progress, setProgress] = useState(0)
@@ -31,7 +31,7 @@ export default function DocumentUploader() {
         const newDocuments = acceptedFiles.map(file => ({
             id: Math.random().toString(36).substr(2, 9),
             title: file.name,
-            author: '',
+            author: [],
             location: '',
             date: '',
             tags: [],
@@ -46,7 +46,7 @@ export default function DocumentUploader() {
 
     const handleInputChange = (id: string, field: keyof Document, value: string) => {
         setDocuments(prev => prev.map(doc =>
-            doc.id === id ? { ...doc, [field]: field === 'tags' ? value.split(',').map(tag => tag.trim()) : value } : doc
+            doc.id === id ? { ...doc, [field]: field === 'tags' || field === 'author' ? value.split(',').map(tag => tag.trim().toLowerCase()) : value } : doc
         ))
     }
 
@@ -68,13 +68,12 @@ export default function DocumentUploader() {
 
         setUploading(true);
 
-        const formData = new FormData();
-
         // Adiciona os dados de cada documento
         for (let i = 0; i < documents.length; i++) {
+            const formData = new FormData();
             formData.append(`id`, documents[i].id);
             formData.append(`title`, documents[i].title);
-            formData.append(`author`, documents[i].author);
+            formData.append(`author`, documents[i].author.join(','));
             formData.append(`location`, documents[i].location);
             formData.append(`date`, documents[i].date);
             formData.append(`tags`, documents[i].tags.join(','));
@@ -115,8 +114,7 @@ export default function DocumentUploader() {
                     });
                 }
 
-                setDocuments([])
-                setProgress(0)
+
             } else {
                 toast({
                     title: "Error",
@@ -126,9 +124,10 @@ export default function DocumentUploader() {
                 setUploading(false);
                 return;
             }
-
-
         };
+        setDocuments([])
+        setUpdateDocs(true)
+        setUploading(false)
     };
 
 
@@ -175,7 +174,7 @@ export default function DocumentUploader() {
                                             <Label htmlFor={`author-${doc.id}`}>Author</Label>
                                             <Input
                                                 id={`author-${doc.id}`}
-                                                value={doc.author}
+                                                value={doc.author.join(', ')}
                                                 onChange={(e) => handleInputChange(doc.id, 'author', e.target.value)}
                                             />
                                         </div>

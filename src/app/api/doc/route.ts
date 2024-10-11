@@ -18,7 +18,6 @@ const credentials = oAuth2Client.setCredentials({
 
 const drive = google.drive({ version: 'v3', auth: oAuth2Client });
 
-// Função para fazer upload do arquivo no Google Drive
 export async function GET() {
     try {
         // Lê o arquivo JSON
@@ -39,9 +38,10 @@ export async function POST(req) {
 
     // Pegue o formData
     const formData = await req.formData();
+
     const file = formData.get('file'); // Pegue o arquivo enviado no form-data
     const title = formData.get('title');
-    const author = formData.get('author');
+    const author = formData.get('author').split(',');
     const location = formData.get('location');
     const date = formData.get('date');
     const tags = formData.get('tags').split(',');
@@ -63,6 +63,7 @@ export async function POST(req) {
 
     // Preparar os dados do documento
     const newDocument = {
+        id: response.data.id,
         title,
         author,
         location,
@@ -92,8 +93,97 @@ export async function POST(req) {
 
 }
 
+export async function PUT(req: Request) {
+    try {
+        // Pegue o formData
+        const formData = await req.formData();
+
+        const file = formData.get('file'); // Pegue o arquivo enviado no form-data (opcional)
+        const id = formData.get('id'); // ID do documento a ser atualizado
+        const title = formData.get('title');
+        const author = formData.get('author').split(',');
+        const location = formData.get('location');
+        const date = formData.get('date');
+        const tags = formData.get('tags').split(',');
+
+        // Ler o arquivo JSON existente
+        const fileData = await fs.readFile(dataFilePath, 'utf-8');
+        let documents = JSON.parse(fileData);
+
+        // Encontrar o documento pelo ID
+        const documentIndex = documents.findIndex((doc) => doc.id === id);
+
+        if (documentIndex === -1) {
+            return NextResponse.json({ message: 'Documento não encontrado' }, { status: 404 });
+        }
+
+        let updatedDocument = { ...documents[documentIndex], title, author, location, date, tags };
+
+        // Se houver um novo arquivo, faça o upload para o Google Drive
+        if (file) {
+            const buffer = Buffer.from(await file.arrayBuffer()); // Converta o arquivo para buffer
+
+            const fileMetadata = {
+                name: file.name,
+            };
+
+            const response = await drive.files.create({
+                requestBody: fileMetadata,
+                media: {
+                    mimeType: file.type,
+                    body: new Stream.PassThrough().end(buffer),
+                },
+                fields: 'id, webViewLink',
+            });
+
+            updatedDocument.driveLink = `https://drive.google.com/file/d/${response.data.id}`;
+        }
+
+        // Atualizar o documento no array
+        documents[documentIndex] = updatedDocument;
+
+        // Escrever o arquivo atualizado
+        await fs.writeFile(dataFilePath, JSON.stringify(documents, null, 2));
+
+        return NextResponse.json({ message: 'Documento atualizado com sucesso!', document: updatedDocument });
+    } catch (error) {
+        return NextResponse.json({ message: 'Erro ao atualizar o documento', error: error.message }, { status: 500 });
+    }
+}
+
+export async function DELETE(req: Request) {
+    try {
+        // Extrair ID do documento da requisição
+        const { id } = await req.json();
+
+        // Ler o arquivo JSON existente
+        const fileData = await fs.readFile(dataFilePath, 'utf-8');
+        let documents = JSON.parse(fileData);
+
+        // Encontrar o documento pelo ID
+        const documentIndex = documents.findIndex((doc) => doc.id === id);
+
+        if (documentIndex === -1) {
+            return NextResponse.json({ message: 'Documento não encontrado' }, { status: 404 });
+        }
+
+        // Remover o arquivo do Google Drive
+        await drive.files.delete({ fileId: documents[documentIndex].id });
+
+        // Remover o documento do array
+        documents.splice(documentIndex, 1);
+
+        // Escrever o arquivo atualizado
+        await fs.writeFile(dataFilePath, JSON.stringify(documents, null, 2));
+
+        return NextResponse.json({ message: 'Documento removido com sucesso!' });
+    } catch (error) {
+        return NextResponse.json({ message: 'Erro ao remover o documento', error: error.message }, { status: 500 });
+    }
+}
+
 export const config = {
     api: {
-        bodyParser: false, // Desativa o parser do corpo para lidar com FormData
+        bodyParser: false,
     },
 };

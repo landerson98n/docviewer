@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { toast } from '@/hooks/use-toast'
+import { useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
 
 // Dynamically import the Graph component
 const Graph = dynamic(() => import('@/components/ui/graph'), {
@@ -18,30 +20,31 @@ const Graph = dynamic(() => import('@/components/ui/graph'), {
 type Document = {
   id: string
   title: string
+  author: string[]
+  location: string
+  date: string
   tags: string[]
-  content: string
+  driveLink: string
+  file: File
 }
 
-// Sample documents
-const sampleDocuments: Document[] = [
-  { id: '1', title: 'Document 1', tags: ['important', 'work'], content: 'Content of document 1' },
-  { id: '2', title: 'Document 2', tags: ['personal', 'finance'], content: 'Content of document 2' },
-  { id: '3', title: 'Document 3', tags: ['work', 'project'], content: 'Content of document 3' },
-  { id: '4', title: 'Document 4', tags: ['important', 'personal'], content: 'Content of document 4' },
-  { id: '5', title: 'Document 5', tags: ['finance', 'work'], content: 'Content of document 5' },
-  { id: '6', title: 'Document 6', tags: ['finance', 'work'], content: 'Content of document 5' },
-  { id: '7', title: 'Document 7', tags: ['finance', 'work'], content: 'Content of document 5' },
-  { id: '8', title: 'Document 8', tags: ['finance', 'work'], content: 'Content of document 5' },
-  { id: '9', title: 'Document 9', tags: ['finance', 'work'], content: 'Content of document 5' },
-]
+// Autumn color palette
+const autumnColors = {
+  background: '#FFF8E1',
+  primary: '#D84315',
+  secondary: '#795548',
+  accent: '#FFA000',
+  text: '#3E2723'
+}
 
 export default function DocViewer() {
-  const [documents, setDocuments] = useState<Document[]>(sampleDocuments)
+  const [documents, setDocuments] = useState<Document[]>([])
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [sortMethod, setSortMethod] = useState<string>('title')
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
   const [searchQuery, setSearchQuery] = useState<string>('')
-
+  const [showIntro, setShowIntro] = useState(true)
+  const route = useRouter()
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -64,6 +67,10 @@ export default function DocViewer() {
     };
 
     fetchDocuments();
+
+    // Hide intro after 3 seconds
+    const timer = setTimeout(() => setShowIntro(false), 3000);
+    return () => clearTimeout(timer);
   }, []);
 
   const filteredAndSortedDocuments = useMemo(() => {
@@ -75,7 +82,15 @@ export default function DocViewer() {
     }
     if (searchQuery) {
       filtered = filtered.filter(doc =>
-        doc.title.toLowerCase().includes(searchQuery.toLowerCase())
+        doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        doc.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        doc.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (Array.isArray(doc.author) && doc.author.some((item: string) =>
+          item.toLowerCase().includes(searchQuery.toLowerCase()))
+        ) ||
+        (Array.isArray(doc.tags) && doc.tags.some((item: string) =>
+          item.toLowerCase().includes(searchQuery.toLowerCase()))
+        )
       )
     }
     return filtered.sort((a, b) => {
@@ -110,62 +125,115 @@ export default function DocViewer() {
   }, [])
 
   return (
-    <div className="flex flex-col h-screen w-screen">
-      <div className="flex flex-col gap-4 p-4 bg-gray-100">
-        <div className="flex justify-between items-center w-48">
-          <Input
-            type="text"
-            placeholder="Search documents..."
-            value={searchQuery}
-            onChange={handleSearchChange}
-            className="w-64"
-          />
-          <Select value={sortMethod} onValueChange={setSortMethod}>
-            <SelectTrigger className="w-12">
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="title">Sort by Title</SelectItem>
-              <SelectItem value="tagCount">Sort by Tag Count</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          {allTags.map(tag => (
-            <Button
-              key={tag}
-              variant={selectedTags.includes(tag) ? "default" : "outline"}
-              onClick={() => handleTagToggle(tag)}
-              className="mb-2"
-            >
-              {tag}
-            </Button>
-          ))}
-        </div>
-      </div>
-      <div className="flex-grow w-full">
-        <Graph
-          documents={filteredAndSortedDocuments}
-          onNodeClick={handleNodeClick}
-        />
-      </div>
-      {selectedDocument && (
-        <Dialog open={!!selectedDocument} onOpenChange={() => setSelectedDocument(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{selectedDocument.title}</DialogTitle>
-            </DialogHeader>
-            <div className="mt-2 w-full overflow-auto">
-              <p><strong>Titulo:</strong> {selectedDocument.title}</p>
-              <p><strong>Tags:</strong> {selectedDocument.tags.join(', ')}</p>
-              <p><strong>Content:</strong> {selectedDocument.content}</p>
-              <p><strong>Autor:</strong> {selectedDocument.author}</p>
-              <p><strong>Localização:</strong> {selectedDocument.location}</p>
-              <p><strong>Data:</strong> {selectedDocument.date}</p>
-              <p><strong>Drive:</strong> {selectedDocument.driveLink}</p>
-            </div>
-          </DialogContent>
-        </Dialog>
+    <AnimatePresence>
+      {showIntro && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5 }}
+          className="fixed inset-0 flex items-center justify-center z-50 bg-[#FFF8E1]"
+        >
+          <motion.h1
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.5, type: "spring", stiffness: 260, damping: 20 }}
+            className="text-5xl font-bold text-[#3E2723]"
+          >
+            Projeto SIA/UFPI
+          </motion.h1>
+        </motion.div>
       )}
-    </div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 3, duration: 1 }}
+        className="flex flex-col h-screen w-screen"
+        style={{ backgroundColor: autumnColors.background, color: autumnColors.text }}
+      >
+        <motion.div
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 3.5, duration: 0.5 }}
+          className="flex flex-col gap-4 p-4 bg-opacity-50"
+          style={{ backgroundColor: autumnColors.secondary }}
+        >
+          <div className="flex justify-between items-center w-full">
+            <Input
+              type="text"
+              placeholder="Search documents..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              className="w-64"
+              style={{ backgroundColor: autumnColors.background, color: autumnColors.text }}
+            />
+            <Button onClick={() => {route.push("/admin")}} style={{ backgroundColor: autumnColors.primary, color: autumnColors.background }}>
+              Login
+            </Button>
+          </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 4, duration: 0.5 }}
+            className="flex gap-2 flex-wrap overflow-auto"
+          >
+            {allTags.map((tag, index) => (
+              <motion.div
+                key={tag}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 4 + index * 0.1, duration: 0.3 }}
+              >
+                <Button
+                  variant={selectedTags.includes(tag) ? "default" : "outline"}
+                  onClick={() => handleTagToggle(tag)}
+                  className="mb-2"
+                  style={{
+                    backgroundColor: selectedTags.includes(tag) ? autumnColors.accent : 'transparent',
+                    color: selectedTags.includes(tag) ? autumnColors.background : autumnColors.text,
+                    borderColor: autumnColors.accent
+                  }}
+                >
+                  {tag}
+                </Button>
+              </motion.div>
+            ))}
+          </motion.div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 4.5, duration: 1 }}
+          className="flex-grow w-full"
+        >
+          <Graph
+            documents={filteredAndSortedDocuments}
+            onNodeClick={handleNodeClick}
+          />
+        </motion.div>
+        {selectedDocument && (
+          <Dialog open={!!selectedDocument} onOpenChange={() => setSelectedDocument(null)}>
+            <DialogContent style={{ backgroundColor: autumnColors.background, color: autumnColors.text }}>
+              <DialogHeader>
+                <DialogTitle style={{ color: autumnColors.primary }}>{selectedDocument.title}</DialogTitle>
+              </DialogHeader>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="mt-2 w-full overflow-auto"
+              >
+                <p><strong>Titulo:</strong> {selectedDocument.title}</p>
+                <p><strong>Tags:</strong> {selectedDocument.tags.join(', ')}</p>
+                <p><strong>Autor:</strong> {selectedDocument.author.join(', ')}</p>
+                <p><strong>Localização:</strong> {selectedDocument.location}</p>
+                <p><strong>Data:</strong> {selectedDocument.date}</p>
+                <p><strong>Drive:</strong><a className='text-blue-950' href={selectedDocument.driveLink}> Link</a> </p>
+              </motion.div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </motion.div>
+    </AnimatePresence>
   )
 }
