@@ -1,13 +1,14 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import DocumentUploader from '../upload/page' // Importe o componente de upload que criamos anteriormente
+import DocumentUploader from '../upload/page'
 import { toast } from '@/hooks/use-toast'
 
 type Document = {
@@ -20,7 +21,16 @@ type Document = {
     driveLink: string
 }
 
-const ADMIN_PASSWORD = "admin123"  // Normalmente, isso seria armazenado de forma segura no servidor
+const ADMIN_PASSWORD = "admin123"
+
+// Autumn color palette
+const autumnColors = {
+    background: '#FFF8E1',
+    primary: '#D84315',
+    secondary: '#795548',
+    accent: '#FFA000',
+    text: '#FFF8E1'
+}
 
 export default function AdminPage() {
     const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -28,29 +38,6 @@ export default function AdminPage() {
     const [documents, setDocuments] = useState<Document[]>([])
     const [editingDocument, setEditingDocument] = useState<Document | null>(null)
     const [isUpdated, setUpdateDocs] = useState(false)
-
-    useEffect(() => {
-        const fetchDocuments = async () => {
-            try {
-                const response = await fetch('/api/doc');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch documents');
-                }
-
-                const data = await response.json();
-                setDocuments(data);
-            } catch (error) {
-                console.error(error);
-                toast({
-                    title: "Error",
-                    description: `Erro ao carregar documentos`,
-                    variant: "destructive",
-                });
-            }
-        };
-
-        fetchDocuments();
-    }, []);
 
     useEffect(() => {
         const fetchDocuments = async () => {
@@ -93,7 +80,6 @@ export default function AdminPage() {
 
     const handleDelete = async (id: string) => {
         try {
-            // Faz a requisição DELETE para a API
             const response = await fetch(`/api/doc`, {
                 method: 'DELETE',
                 headers: {
@@ -103,9 +89,7 @@ export default function AdminPage() {
             });
 
             if (response.ok) {
-                // Atualiza o estado local removendo o documento
                 setDocuments(prev => prev.filter(doc => doc.id !== id));
-
                 toast({
                     title: "Success",
                     description: "Document deleted successfully!",
@@ -135,16 +119,14 @@ export default function AdminPage() {
         if (!editingDocument) return;
 
         try {
-            // Faz a requisição PUT para a API
             const formData = new FormData();
             formData.append('id', editingDocument.id);
             formData.append('title', editingDocument.title);
-            formData.append('author', editingDocument.author.join(',')); // Convertendo array para string
+            formData.append('author', editingDocument.author.join(','));
             formData.append('location', editingDocument.location);
             formData.append('date', editingDocument.date);
-            formData.append('tags', editingDocument.tags.join(',')); // Convertendo array para string
+            formData.append('tags', editingDocument.tags.join(','));
 
-            // Caso o arquivo tenha sido alterado, adicione o novo arquivo
             if (editingDocument.file) {
                 formData.append('file', editingDocument.file);
             }
@@ -156,10 +138,7 @@ export default function AdminPage() {
 
             if (response.ok) {
                 const updatedDocument = await response.json();
-
-                // Atualiza o estado local com o documento atualizado
                 setDocuments(prev => prev.map(doc => doc.id === updatedDocument.id ? updatedDocument : doc));
-
                 setEditingDocument(null);
                 toast({
                     title: "Success",
@@ -181,132 +160,161 @@ export default function AdminPage() {
             });
         }
     };
+
     if (!isAuthenticated) {
         return (
-            <Card className="w-full max-w-md mx-auto mt-8">
-                <CardHeader>
-                    <CardTitle>Admin Login</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-4">
-                        <div>
-                            <Label htmlFor="password">Password</Label>
-                            <Input
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
+            <motion.div
+                initial={{ opacity: 0, y: -50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className='w-full'
+                style={{ backgroundColor: autumnColors.background, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+                <Card className="w-full max-w-md" style={{ backgroundColor: autumnColors.secondary, color: autumnColors.text }}>
+                    <CardHeader>
+                        <CardTitle style={{ color: autumnColors.accent }}>Admin Login</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            <div>
+                                <Label htmlFor="password" style={{ color: autumnColors.text }}>Password</Label>
+                                <Input
+                                    id="password"
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    style={{ backgroundColor: autumnColors.background, color: autumnColors.text }}
+                                />
+                            </div>
+                            <Button onClick={handleLogin} className="w-full" style={{ backgroundColor: autumnColors.primary, color: autumnColors.background }}>Login</Button>
                         </div>
-                        <Button onClick={handleLogin} className="w-full">Login</Button>
-                    </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            </motion.div>
         )
     }
 
     return (
-        <div className="container mx-auto p-4 space-y-8">
-            <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="container mx-auto p-4 space-y-8 w-full"
+            style={{ backgroundColor: 'white', color: autumnColors.text, minHeight: '100vh' }}
+        >
+            <h1 className="text-2xl font-bold" style={{ color: autumnColors.primary }}>Admin Dashboard</h1>
 
-            <Card>
+            <Card style={{ backgroundColor: autumnColors.secondary }}>
                 <CardHeader>
-                    <CardTitle>Document Management</CardTitle>
+                    <CardTitle style={{ color: autumnColors.accent }}>Document Management</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Title</TableHead>
-                                <TableHead>Author</TableHead>
-                                <TableHead>Location</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Tags</TableHead>
-                                <TableHead>Actions</TableHead>
+                                <TableHead style={{ color: autumnColors.accent }}>Title</TableHead>
+                                <TableHead style={{ color: autumnColors.accent }}>Author</TableHead>
+                                <TableHead style={{ color: autumnColors.accent }}>Location</TableHead>
+                                <TableHead style={{ color: autumnColors.accent }}>Date</TableHead>
+                                <TableHead style={{ color: autumnColors.accent }}>Tags</TableHead>
+                                <TableHead style={{ color: autumnColors.accent }} className='w-48'>Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {documents.map(doc => (
-                                <TableRow key={doc.id}>
-                                    <TableCell>{doc.title}</TableCell>
-                                    <TableCell>{doc.author.join(', ')}</TableCell>
-                                    <TableCell>{doc.location}</TableCell>
-                                    <TableCell>{doc.date}</TableCell>
-                                    <TableCell>{doc.tags.join(', ')}</TableCell>
-                                    <TableCell>
-                                        <div className="space-x-2">
-                                            <Dialog>
-                                                <DialogTrigger asChild>
-                                                    <Button variant="outline" size="sm" onClick={() => handleEdit(doc)}>Edit</Button>
-                                                </DialogTrigger>
-                                                <DialogContent>
-                                                    <DialogHeader>
-                                                        <DialogTitle>Edit Document</DialogTitle>
-                                                    </DialogHeader>
-                                                    <div className="space-y-4">
-                                                        <div>
-                                                            <Label htmlFor="edit-title">Title</Label>
-                                                            <Input
-                                                                id="edit-title"
-                                                                value={editingDocument?.title || ''}
-                                                                onChange={(e) => setEditingDocument(prev => prev ? { ...prev, title: e.target.value } : null)}
-                                                            />
+                            <AnimatePresence>
+                                {documents.map((doc, index) => (
+                                    <motion.tr
+                                        key={doc.id}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -20 }}
+                                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                                    >
+                                        <TableCell style={{ color: autumnColors.text }}>{doc.title}</TableCell>
+                                        <TableCell style={{ color: autumnColors.text }}>{doc.author.join(', ')}</TableCell>
+                                        <TableCell style={{ color: autumnColors.text }}>{doc.location}</TableCell>
+                                        <TableCell style={{ color: autumnColors.text }}>{doc.date}</TableCell>
+                                        <TableCell style={{ color: autumnColors.text }}>{doc.tags.join(', ')}</TableCell>
+                                        <TableCell>
+                                            <div className="space-x-2">
+                                                <Dialog>
+                                                    <DialogTrigger asChild>
+                                                        <Button variant="outline" size="sm" onClick={() => handleEdit(doc)} style={{ backgroundColor: autumnColors.accent, color: autumnColors.text }}>Edit</Button>
+                                                    </DialogTrigger>
+                                                    <DialogContent style={{ backgroundColor: autumnColors.background }}>
+                                                        <DialogHeader>
+                                                            <DialogTitle style={{ color: autumnColors.primary }}>Edit Document</DialogTitle>
+                                                        </DialogHeader>
+                                                        <div className="space-y-4">
+                                                            <div>
+                                                                <Label htmlFor="edit-title" style={{ color: autumnColors.text }}>Title</Label>
+                                                                <Input
+                                                                    id="edit-title"
+                                                                    value={editingDocument?.title || ''}
+                                                                    onChange={(e) => setEditingDocument(prev => prev ? { ...prev, title: e.target.value } : null)}
+                                                                    style={{ backgroundColor: autumnColors.secondary, color: autumnColors.text }}
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <Label htmlFor="edit-author" style={{ color: autumnColors.text }}>Author</Label>
+                                                                <Input
+                                                                    id="edit-author"
+                                                                    value={editingDocument?.author.join(', ') || ''}
+                                                                    onChange={(e) => setEditingDocument(prev => prev ? { ...prev, author: e.target.value.split(',').map(tag => tag.trim().toLowerCase()) } : null)}
+                                                                    style={{ backgroundColor: autumnColors.secondary, color: autumnColors.text }}
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <Label htmlFor="edit-location" style={{ color: autumnColors.text }}>Location</Label>
+                                                                <Input
+                                                                    id="edit-location"
+                                                                    value={editingDocument?.location || ''}
+                                                                    onChange={(e) => setEditingDocument(prev => prev ? { ...prev, location: e.target.value } : null)}
+                                                                    style={{ backgroundColor: autumnColors.secondary, color: autumnColors.text }}
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <Label htmlFor="edit-date" style={{ color: autumnColors.text }}>Date</Label>
+                                                                <Input
+                                                                    id="edit-date"
+                                                                    type="date"
+                                                                    value={editingDocument?.date || ''}
+                                                                    onChange={(e) => setEditingDocument(prev => prev ? { ...prev, date: e.target.value } : null)}
+                                                                    style={{ backgroundColor: autumnColors.secondary, color: autumnColors.text }}
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <Label htmlFor="edit-tags" style={{ color: autumnColors.text }}>Tags</Label>
+                                                                <Input
+                                                                    id="edit-tags"
+                                                                    value={editingDocument?.tags.join(', ') || ''}
+                                                                    onChange={(e) => setEditingDocument(prev => prev ? { ...prev, tags: e.target.value.split(',').map(tag => tag.trim().toLowerCase()) } : null)}
+                                                                    style={{ backgroundColor: autumnColors.secondary, color: autumnColors.text }}
+                                                                />
+                                                            </div>
+                                                            <Button onClick={handleSaveEdit} style={{ backgroundColor: autumnColors.primary, color: autumnColors.background }}>Save Changes</Button>
                                                         </div>
-                                                        <div>
-                                                            <Label htmlFor="edit-author">Author</Label>
-                                                            <Input
-                                                                id="edit-author"
-                                                                value={editingDocument?.author.join(', ') || ''}
-                                                                onChange={(e) => setEditingDocument(prev => prev ? { ...prev, author: e.target.value.split(',').map(tag => tag.trim().toLowerCase()) } : null)}
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <Label htmlFor="edit-location">Location</Label>
-                                                            <Input
-                                                                id="edit-location"
-                                                                value={editingDocument?.location || ''}
-                                                                onChange={(e) => setEditingDocument(prev => prev ? { ...prev, location: e.target.value } : null)}
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <Label htmlFor="edit-date">Date</Label>
-                                                            <Input
-                                                                id="edit-date"
-                                                                type="date"
-                                                                value={editingDocument?.date || ''}
-                                                                onChange={(e) => setEditingDocument(prev => prev ? { ...prev, date: e.target.value } : null)}
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <Label htmlFor="edit-tags">Tags</Label>
-                                                            <Input
-                                                                id="edit-tags"
-                                                                value={editingDocument?.tags.join(', ') || ''}
-                                                                onChange={(e) => setEditingDocument(prev => prev ? { ...prev, tags: e.target.value.split(',').map(tag => tag.trim().toLowerCase()) } : null)}
-                                                            />
-                                                        </div>
-                                                        <Button onClick={handleSaveEdit}>Save Changes</Button>
-                                                    </div>
-                                                </DialogContent>
-                                            </Dialog>
-                                            <Button variant="destructive" size="sm" onClick={() => handleDelete(doc.id)}>Delete</Button>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
+                                                    </DialogContent>
+                                                </Dialog>
+                                                <Button variant="destructive" size="sm" onClick={() => handleDelete(doc.id)} style={{ backgroundColor: autumnColors.primary, color: autumnColors.background }}>Delete</Button>
+                                            </div>
+                                        </TableCell>
+                                    </motion.tr>
+                                ))}
+                            </AnimatePresence>
                         </TableBody>
                     </Table>
                 </CardContent>
             </Card>
 
-            <Card>
+            <Card style={{ backgroundColor: autumnColors.secondary }}>
                 <CardHeader>
-                    <CardTitle>Upload New Documents</CardTitle>
+                    <CardTitle style={{ color: autumnColors.accent }}>Upload New Documents</CardTitle>
                 </CardHeader>
                 <CardContent className='overflow-auto'>
                     <DocumentUploader setUpdateDocs={setUpdateDocs} />
                 </CardContent>
             </Card>
-        </div>
+        </motion.div>
     )
 }
