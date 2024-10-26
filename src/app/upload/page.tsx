@@ -20,9 +20,10 @@ type Document = {
     tags: string[]
     driveLink: string
     file: File
+    description: string
 }
 
-export default function DocumentUploader({setUpdateDocs}) {
+export default function DocumentUploader({ setUpdateDocs }) {
     const [documents, setDocuments] = useState<Document[]>([])
     const [uploading, setUploading] = useState(false)
     const [progress, setProgress] = useState(0)
@@ -36,7 +37,8 @@ export default function DocumentUploader({setUpdateDocs}) {
             date: '',
             tags: [],
             driveLink: '',
-            file: file
+            file: file,
+            description: ''
         }))
         setDocuments(prev => [...prev, ...newDocuments])
     }, [])
@@ -77,7 +79,7 @@ export default function DocumentUploader({setUpdateDocs}) {
             formData.append(`location`, documents[i].location);
             formData.append(`date`, documents[i].date);
             formData.append(`tags`, documents[i].tags.join(','));
-
+            formData.append(`description`, documents[i].description);
             // Adiciona o arquivo correspondente
             if (documents[i].file) {
                 formData.append(`file`, documents[i].file);
@@ -201,6 +203,14 @@ export default function DocumentUploader({setUpdateDocs}) {
                                                 id={`tags-${doc.id}`}
                                                 value={doc.tags.join(', ')}
                                                 onChange={(e) => handleInputChange(doc.id, 'tags', e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <Label htmlFor={`description-${doc.id}`}>Tags (comma-separated)</Label>
+                                            <Input
+                                                id={`description-${doc.id}`}
+                                                value={doc.tags.join(', ')}
+                                                onChange={(e) => handleInputChange(doc.id, 'description', e.target.value)}
                                             />
                                         </div>
                                     </div>

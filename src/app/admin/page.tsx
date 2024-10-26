@@ -19,6 +19,7 @@ type Document = {
     date: string
     tags: string[]
     driveLink: string
+    description: string
 }
 
 const ADMIN_PASSWORD = "admin123"
@@ -125,6 +126,7 @@ export default function AdminPage() {
             formData.append('author', editingDocument.author.join(','));
             formData.append('location', editingDocument.location);
             formData.append('date', editingDocument.date);
+            formData.append('description', editingDocument.description);
             formData.append('tags', editingDocument.tags.join(','));
 
             if (editingDocument.file) {
@@ -217,6 +219,7 @@ export default function AdminPage() {
                                 <TableHead style={{ color: autumnColors.accent }}>Author</TableHead>
                                 <TableHead style={{ color: autumnColors.accent }}>Location</TableHead>
                                 <TableHead style={{ color: autumnColors.accent }}>Date</TableHead>
+                                <TableHead style={{ color: autumnColors.accent }}>Description</TableHead>
                                 <TableHead style={{ color: autumnColors.accent }}>Tags</TableHead>
                                 <TableHead style={{ color: autumnColors.accent }} className='w-48'>Actions</TableHead>
                             </TableRow>
@@ -235,6 +238,7 @@ export default function AdminPage() {
                                         <TableCell style={{ color: autumnColors.text }}>{doc.author.join(', ')}</TableCell>
                                         <TableCell style={{ color: autumnColors.text }}>{doc.location}</TableCell>
                                         <TableCell style={{ color: autumnColors.text }}>{doc.date}</TableCell>
+                                        <TableCell style={{ color: autumnColors.text }}>{doc.description}</TableCell>
                                         <TableCell style={{ color: autumnColors.text }}>{doc.tags.join(', ')}</TableCell>
                                         <TableCell>
                                             <div className="space-x-2">
@@ -290,6 +294,15 @@ export default function AdminPage() {
                                                                     id="edit-tags"
                                                                     value={editingDocument?.tags.join(', ') || ''}
                                                                     onChange={(e) => setEditingDocument(prev => prev ? { ...prev, tags: e.target.value.split(',').map(tag => tag.trim().toLowerCase()) } : null)}
+                                                                    style={{ backgroundColor: autumnColors.secondary, color: autumnColors.text }}
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <Label htmlFor="edit-tags" style={{ color: autumnColors.text }}>Tags</Label>
+                                                                <Input
+                                                                    id="edit-tags"
+                                                                    value={editingDocument?.description || ''}
+                                                                    onChange={(e) => setEditingDocument(prev => prev ? { ...prev, description: e.target.value } : null)}
                                                                     style={{ backgroundColor: autumnColors.secondary, color: autumnColors.text }}
                                                                 />
                                                             </div>

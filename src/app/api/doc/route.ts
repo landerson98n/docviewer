@@ -2,19 +2,20 @@ import { NextResponse } from 'next/server'
 import { google } from 'googleapis'
 import { Stream } from 'stream'
 
-const oAuth2Client = new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GOOGLE_REDIRECT_URI
-);
+const oAuth2Client = new google.auth.OAuth2({
+    clientId: '255256262245-2gfrra6riq4fi62ba0lmembsf8org4dt.apps.googleusercontent.com',
+    clientSecret: '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',
+    redirectUri: 'https://localhost'
+
+});
 
 oAuth2Client.setCredentials({
-    refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+    refresh_token: '1//04vZU2mg9cvNDCgYIARAAGAQSNwF-L9IrNgidZJba7iTybGGv-8HJWxrAoIulXfiQOJ5wfhheBqDk0CeQSUa_RDt1T_FyESLTT6M',
+    access_token: 'ya29.a0AeDClZB5_RinKBVN-HiQ4EICLm83kz5SLlPaIJmMDulbcrrFmDIcp6QpU0HvzXOM_RAuolFMSC1fLnsMmJaCBiW3COheCKJMU2Gty5oJaqzVucod3xXx_r7zNKAjhpiwyoXBvkXH4ocM-DDRWncYD9wME-g_5Bi7mTiXaBmnaCgYKAegSAQ4SFQHGX2MiDzIKHuJi8TDw9EAbv0tDsQ0175',
     scope: 'https://www.googleapis.com/auth/drive',
 });
 
 const drive = google.drive({ version: 'v3', auth: oAuth2Client });
-
 const JSON_FILE_NAME = 'documents.json';  // Nome do arquivo no Google Drive
 
 // Função para buscar o arquivo JSON no Google Drive
@@ -85,6 +86,7 @@ export async function POST(req) {
         const author = formData.get('author').split(',');
         const location = formData.get('location');
         const date = formData.get('date');
+        const description = formData.get('description');
         const tags = formData.get('tags').split(',');
 
         // Upload do arquivo para o Google Drive
@@ -106,6 +108,7 @@ export async function POST(req) {
             location,
             date,
             tags,
+            description,
             driveLink: `https://drive.google.com/file/d/${response.data.id}`,
         };
 
