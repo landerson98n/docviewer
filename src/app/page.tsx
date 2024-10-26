@@ -1,22 +1,22 @@
-"use client"
+'use client'
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { toast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ChevronDown, Tag } from 'lucide-react'
 
-// Dynamically import the Graph component
 const Graph = dynamic(() => import('@/components/ui/graph'), {
   ssr: false,
   loading: () => <p>Loading graph...</p>
 })
 
-// Type to represent a document
 type Document = {
   id: string
   title: string
@@ -26,9 +26,9 @@ type Document = {
   tags: string[]
   driveLink: string
   file: File
+  description: string
 }
 
-// Autumn color palette
 const autumnColors = {
   background: '#FFF8E1',
   primary: '#D84315',
@@ -37,10 +37,9 @@ const autumnColors = {
   text: '#3E2723'
 }
 
-export default function DocViewer() {
+export default function ImprovedDocViewer() {
   const [documents, setDocuments] = useState<Document[]>([])
   const [selectedTags, setSelectedTags] = useState<string[]>([])
-  const [sortMethod, setSortMethod] = useState<string>('title')
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [showIntro, setShowIntro] = useState(true)
@@ -53,7 +52,6 @@ export default function DocViewer() {
         if (!response.ok) {
           throw new Error('Failed to fetch documents');
         }
-
         const data = await response.json();
         setDocuments(data);
       } catch (error) {
@@ -67,41 +65,9 @@ export default function DocViewer() {
     };
 
     fetchDocuments();
-
-    // Hide intro after 3 seconds
     const timer = setTimeout(() => setShowIntro(false), 3000);
     return () => clearTimeout(timer);
   }, []);
-
-  const filteredAndSortedDocuments = useMemo(() => {
-    let filtered = documents
-    if (selectedTags.length > 0) {
-      filtered = filtered.filter(doc =>
-        selectedTags.every(tag => doc.tags.includes(tag))
-      )
-    }
-    if (searchQuery) {
-      filtered = filtered.filter(doc =>
-        doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        doc.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        doc.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (Array.isArray(doc.author) && doc.author.some((item: string) =>
-          item.toLowerCase().includes(searchQuery.toLowerCase()))
-        ) ||
-        (Array.isArray(doc.tags) && doc.tags.some((item: string) =>
-          item.toLowerCase().includes(searchQuery.toLowerCase()))
-        )
-      )
-    }
-    return filtered.sort((a, b) => {
-      if (sortMethod === 'title') {
-        return a.title.localeCompare(b.title)
-      } else if (sortMethod === 'tagCount') {
-        return b.tags.length - a.tags.length
-      }
-      return 0
-    })
-  }, [documents, selectedTags, sortMethod, searchQuery])
 
   const allTags = useMemo(() => {
     const tags = new Set<string>()
@@ -109,20 +75,62 @@ export default function DocViewer() {
     return Array.from(tags)
   }, [documents])
 
+  const filteredDocuments = useMemo(() => {
+    return documents.filter(doc =>
+      (selectedTags.length === 0 || selectedTags.every(tag => doc.tags.includes(tag))) &&
+      (searchQuery === '' ||
+        doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        doc.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        doc.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        doc.author.some(author => author.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        doc.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+    );
+  }, [documents, selectedTags, searchQuery]);
+
+  const tagGroups = useMemo(() => {
+    const groups: { [key: string]: string[] } = {};
+    documents.forEach(doc => {
+      doc.tags.forEach(tag => {
+        const prefix = tag.split('/')[0];
+        if (!groups[prefix]) {
+          groups[prefix] = [];
+        }
+        if (!groups[prefix].includes(tag)) {
+          groups[prefix].push(tag);
+        }
+      });
+    });
+    return groups;
+  }, [documents]);
+
+  const topTags = useMemo(() => {
+    const tagCounts = documents.reduce((acc, doc) => {
+      doc.tags.forEach(tag => {
+        acc[tag] = (acc[tag] || 0) + 1;
+      });
+      return acc;
+    }, {} as { [key: string]: number });
+    return Object.entries(tagCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([tag]) => tag);
+  }, [documents]);
+
   const handleTagToggle = useCallback((tag: string) => {
     setSelectedTags(prev =>
       prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
     )
-  }, [])
+  }, []);
 
   const handleNodeClick = useCallback((nodeId: string) => {
     const selected = documents.find(doc => doc.id === nodeId)
     setSelectedDocument(selected || null)
-  }, [documents])
+  }, [documents]);
 
   const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value)
-  }, [])
+  }, []);
 
   return (
     <AnimatePresence>
@@ -167,7 +175,7 @@ export default function DocViewer() {
               className="w-64"
               style={{ backgroundColor: autumnColors.background, color: autumnColors.text }}
             />
-            <Button onClick={() => {route.push("/admin")}} style={{ backgroundColor: autumnColors.primary, color: autumnColors.background }}>
+            <Button onClick={() => { route.push("/admin") }} style={{ backgroundColor: autumnColors.primary, color: autumnColors.background }}>
               Login
             </Button>
           </div>
@@ -175,29 +183,66 @@ export default function DocViewer() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 4, duration: 0.5 }}
-            className="flex gap-2 flex-wrap overflow-auto"
+            className="flex gap-2 flex-wrap"
           >
-            {allTags.map((tag, index) => (
-              <motion.div
+            {topTags.map((tag, index) => (
+              <Button
                 key={tag}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 4 + index * 0.1, duration: 0.3 }}
+                variant={selectedTags.includes(tag) ? "default" : "outline"}
+                onClick={() => handleTagToggle(tag)}
+                className="text-xs py-1 px-2"
+                style={{
+                  backgroundColor: selectedTags.includes(tag) ? autumnColors.accent : 'transparent',
+                  color: selectedTags.includes(tag) ? autumnColors.background : autumnColors.text,
+                  borderColor: autumnColors.accent
+                }}
               >
-                <Button
-                  variant={selectedTags.includes(tag) ? "default" : "outline"}
-                  onClick={() => handleTagToggle(tag)}
-                  className="mb-2"
-                  style={{
-                    backgroundColor: selectedTags.includes(tag) ? autumnColors.accent : 'transparent',
-                    color: selectedTags.includes(tag) ? autumnColors.background : autumnColors.text,
-                    borderColor: autumnColors.accent
-                  }}
-                >
-                  {tag}
-                </Button>
-              </motion.div>
+                {tag.split('/').pop()}
+              </Button>
             ))}
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="text-xs py-1 px-2">
+                  <Tag className="mr-1 h-4 w-4" /> Tag Cloud
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Tag Cloud</DialogTitle>
+                </DialogHeader>
+                <div className="py-4 overflow-auto max-h-[calc(80vh)]">
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 4, duration: 0.5 }}
+                    className="flex gap-2 flex-wrap overflow-y-scroll"
+                  >
+                    {allTags.map((tag, index) => (
+                      <motion.div
+                        key={tag}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 4 + index * 0.1, duration: 0.3 }}
+                        
+                      >
+                        <Button
+                          variant={selectedTags.includes(tag) ? "default" : "outline"}
+                          onClick={() => handleTagToggle(tag)}
+                          className="mb-2"
+                          style={{
+                            backgroundColor: selectedTags.includes(tag) ? autumnColors.accent : 'transparent',
+                            color: selectedTags.includes(tag) ? autumnColors.background : autumnColors.text,
+                            borderColor: autumnColors.accent
+                          }}
+                        >
+                          {tag}
+                        </Button>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </motion.div>
         </motion.div>
         <motion.div
@@ -207,13 +252,13 @@ export default function DocViewer() {
           className="flex-grow w-full"
         >
           <Graph
-            documents={filteredAndSortedDocuments}
+            documents={filteredDocuments}
             onNodeClick={handleNodeClick}
           />
         </motion.div>
         {selectedDocument && (
           <Dialog open={!!selectedDocument} onOpenChange={() => setSelectedDocument(null)}>
-            <DialogContent style={{ backgroundColor: autumnColors.background, color: autumnColors.text }}>
+            <DialogContent className='max-h-[calc(90vh)] overflow-y-scroll' style={{ backgroundColor: autumnColors.background, color: autumnColors.text }}>
               <DialogHeader>
                 <DialogTitle style={{ color: autumnColors.primary }}>{selectedDocument.title}</DialogTitle>
               </DialogHeader>
@@ -221,13 +266,14 @@ export default function DocViewer() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="mt-2 w-full overflow-auto"
+                className="mt-2 w-full overflow-y-scroll"
               >
                 <p><strong>Titulo:</strong> {selectedDocument.title}</p>
                 <p><strong>Tags:</strong> {selectedDocument.tags.join(', ')}</p>
                 <p><strong>Autor:</strong> {selectedDocument.author.join(', ')}</p>
                 <p><strong>Localização:</strong> {selectedDocument.location}</p>
                 <p><strong>Data:</strong> {selectedDocument.date}</p>
+                <p><strong>Descrição:</strong> {selectedDocument.description}</p>
                 <p><strong>Drive:</strong><a className='text-blue-950' href={selectedDocument.driveLink}> Link</a> </p>
               </motion.div>
             </DialogContent>

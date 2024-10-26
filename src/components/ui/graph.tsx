@@ -51,8 +51,8 @@ const Graph = memo(function Graph({ documents, onNodeClick }: GraphProps) {
         const fg = fgRef.current;
         if (fg) {
             // Increase link distance
-            fg.d3Force('link').distance(100);
-            fg.d3Force('charge').strength(-100);
+            fg.d3Force('link').distance(500);
+            fg.d3Force('charge').strength(-1000);
         }
     }, []);
 
@@ -81,29 +81,19 @@ const Graph = memo(function Graph({ documents, onNodeClick }: GraphProps) {
                     const label = node.name as string
                     const fontSize = 12 / globalScale
                     ctx.font = `${fontSize}px Sans-Serif`
-                    const textWidth = ctx.measureText(label).width
-                    const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2)
 
                     // Draw node
-                    const nodeSize = 5 + ((node as any).connections) * 2
+                    const nodeSize = 20 + ((node as any).connections) * 2
                     ctx.beginPath()
-                    ctx.arc(node.x as number, node.y as number, nodeSize, 0, 2 * Math.PI)
+                    ctx.arc(node.x as number, node.y as number, nodeSize, 0, 4 * Math.PI)
                     ctx.fillStyle = autumnColors.primary
                     ctx.fill()
 
-                    // Draw label background
-                    ctx.fillStyle = autumnColors.secondary
-                    ctx.fillRect(
-                        (node.x as number) - bckgDimensions[0] / 2,
-                        (node.y as number) - bckgDimensions[1] / 2 - nodeSize - 2,
-                        bckgDimensions[0],
-                        bckgDimensions[1]
-                    )
-
+                
                     // Draw label text
                     ctx.textAlign = 'center'
                     ctx.textBaseline = 'middle'
-                    ctx.fillStyle = autumnColors.background
+                    ctx.fillStyle = autumnColors.secondary
                     ctx.fillText(label, node.x as number, (node.y as number) - nodeSize - 2)
                 }}
                 nodePointerAreaPaint={(node, color, ctx) => {
@@ -114,7 +104,7 @@ const Graph = memo(function Graph({ documents, onNodeClick }: GraphProps) {
                     ctx.fill()
                 }}
                 linkColor={() => autumnColors.secondary}
-                linkWidth={2}
+                linkWidth={7}
                 nodeRelSize={1}
                 cooldownTicks={100}
                 linkDirectionalParticles={7}
