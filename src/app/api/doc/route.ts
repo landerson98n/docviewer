@@ -5,14 +5,19 @@ import { Stream } from 'stream'
 const oAuth2Client = new google.auth.OAuth2({
     clientId: '255256262245-2gfrra6riq4fi62ba0lmembsf8org4dt.apps.googleusercontent.com',
     clientSecret: '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',
-    redirectUri: 'https://localhost'
+    redirectUri: 'https://localhost',
+});
 
+const authUrl = oAuth2Client.generateAuthUrl({
+    access_type: 'offline', 
+    scope: ['https://www.googleapis.com/auth/drive'], 
+    client_id: '255256262245-2gfrra6riq4fi62ba0lmembsf8org4dt.apps.googleusercontent.com',
+    redirectUri: 'https://localhost',
 });
 
 oAuth2Client.setCredentials({
-    refresh_token: '1//04LR_MM5SWLYWCgYIARAAGAQSNwF-L9IryralWls359OX_nkWIvRoGwHT8RK9MfKEsD7Crx5rJgHUgPis9NzGybpIMKoBx-2Lr7Q',
-    access_token: 'ya29.a0AeDClZBK3N5OgJzasZaHfl9V5KrXgC1KrrWwQgM6fqhgQVyv3Lscmm8mx52vR6VNl8lrP7wyOHtdB3u6cqxkTEpFJq0LmAxD2jrnnFUz-_0DgorcJtGl93kHnIgfm6NmzL5Poon5oyuRFWEAo8h5Aek5mgxgR57y0Twlw_ELaCgYKAVQSAQ4SFQHGX2Mi8phYTkuLU7IlEQg3f8cBdQ0175',
-    scope: 'https://www.googleapis.com/auth/drive',
+    refresh_token: '1//0hWu-iaB5DWErCgYIARAAGBESNwF-L9IrolDTbxUgeeaTjNTSUrdzTkV6CzLRmi16MXAr6IevBXeuF-SDzme3nauSHPzpqf18w3g',
+    scope: 'http://www.googleapis.com/auth/drive',
 });
 
 const drive = google.drive({ version: 'v3', auth: oAuth2Client });
@@ -69,6 +74,8 @@ async function saveJSONFile(fileId, documents) {
 
 // Função GET para buscar os documentos
 export async function GET() {
+    console.log(authUrl);
+    
     try {
         const { data } = await getJSONFile();
         return NextResponse.json(data, { status: 200 });
