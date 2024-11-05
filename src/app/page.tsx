@@ -135,13 +135,13 @@ export default function ImprovedDocViewer() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
-          className="fixed inset-0 flex items-center justify-center z-50 bg-[#FFF8E1]"
+          className="fixed inset-0 flex items-center justify-center z-50 bg-white"
         >
           <motion.h1
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.5, type: "spring", stiffness: 260, damping: 20 }}
-            className="text-5xl font-bold text-[#3E2723]"
+            className="text-5xl font-bold text-[#034ea2]"
           >
             Projeto SIA/UFPI
           </motion.h1>
