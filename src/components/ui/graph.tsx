@@ -86,7 +86,9 @@ const Graph = memo(function Graph({ documents, onNodeClick, selectedLength, topT
                 ? (isTabletOrMobile ? 0.25 : 0.25)
                 : (isTabletOrMobile ? 0.5 : 1);
             fgRef.current.zoom(zoomLevel, 400);
+            fgRef.current.centerAt(window.innerWidth / 2, window.innerHeight / 2, 400);
         }
+
     }, [selectedLength, isTabletOrMobile]);
 
     const autumnColors = {
