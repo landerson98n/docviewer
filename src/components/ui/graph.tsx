@@ -3,7 +3,7 @@
 import React, { useCallback, memo, useMemo, useRef, useEffect, useState } from 'react'
 import { ForceGraph2D } from 'react-force-graph'
 import { motion } from 'framer-motion'
-import mobile from 'is-mobile'
+import { useMediaQuery } from 'react-responsive'
 import { forceCenter } from 'd3'
 import { Button } from './button'
 
@@ -30,6 +30,13 @@ const Graph = memo(function Graph({ documents, onNodeClick, selectedLength, topT
     const fgRef = useRef<any>();
     const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
     const containerRef = useRef<HTMLDivElement>(null);
+    const isDesktopOrLaptop = useMediaQuery({
+        query: '(min-width: 1224px)'
+    })
+    const isBigScreen = useMediaQuery({ query: '(min-width: 1824px)' })
+    const isTabletOrMobile = useMediaQuery({ query: '(max-width: 1224px)' })
+    const isPortrait = useMediaQuery({ query: '(orientation: portrait)' })
+    const isRetina = useMediaQuery({ query: '(min-resolution: 2dppx)' })
 
     const data = useMemo(() => {
         const nodes = documents.map(doc => ({
@@ -69,9 +76,18 @@ const Graph = memo(function Graph({ documents, onNodeClick, selectedLength, topT
             fg.d3Force('link').distance(500);
             fg.d3Force('charge').strength(-1000);
             fg.d3Force('center', forceCenter(window.innerWidth / 2, window.innerHeight / 2));
-            fg.zoom(1);
+            fg.zoom(0.25);
         }
     }, []);
+
+    useEffect(() => {
+        if (fgRef.current) {
+            const zoomLevel = selectedLength === 0
+                ? (isTabletOrMobile ? 0.25 : 0.25)
+                : (isTabletOrMobile ? 0.5 : 1);
+            fgRef.current.zoom(zoomLevel, 400);
+        }
+    }, [selectedLength, isTabletOrMobile]);
 
     const autumnColors = {
         background: '#FFF8E1',
@@ -117,7 +133,7 @@ const Graph = memo(function Graph({ documents, onNodeClick, selectedLength, topT
                         color: '#034ea2',
                         fontSize: `${16 / transform.k}px`,
                         padding: `${8 / transform.k}px ${12 / transform.k}px`,
-                        width:  window.innerWidth / 2 
+                        width: window.innerWidth / 2
                     }}
                 >
                     {item}
@@ -163,7 +179,7 @@ const Graph = memo(function Graph({ documents, onNodeClick, selectedLength, topT
                 linkDirectionalParticleSpeed={0.005}
                 linkDirectionalParticleWidth={5}
                 linkDirectionalParticleColor={() => autumnColors.accent}
-                minZoom={selectedLength === 0 ? (mobile() ? 0.25 : 0.25) : (mobile() ? 0.5 : 1)}
+                minZoom={selectedLength === 0 ? (isTabletOrMobile ? 0.25 : 0.25) : (isTabletOrMobile ? 0.5 : 1)}
             />
         </motion.div>
     )
