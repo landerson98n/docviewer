@@ -16,7 +16,7 @@ const authUrl = oAuth2Client.generateAuthUrl({
 });
 
 oAuth2Client.setCredentials({
-    refresh_token: '1//0hWu-iaB5DWErCgYIARAAGBESNwF-L9IrolDTbxUgeeaTjNTSUrdzTkV6CzLRmi16MXAr6IevBXeuF-SDzme3nauSHPzpqf18w3g',
+    refresh_token: '1//0hWu-iaB5DWErCgYIARAAGBESNwF-L9IrolDTbxUgeeaTjNTSUrdzTkV6CzLRmi16MXAr6IevBXeuF-SDzme3nauSHPzpqf18w3g ',
     scope: 'http://www.googleapis.com/auth/drive',
 });
 

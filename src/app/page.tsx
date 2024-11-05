@@ -5,12 +5,12 @@ import dynamic from 'next/dynamic'
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { toast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, Tag } from 'lucide-react'
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { ChevronDown } from 'lucide-react'
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 const Graph = dynamic(() => import('@/components/ui/graph'), {
   ssr: false,
@@ -30,11 +30,11 @@ type Document = {
 }
 
 const autumnColors = {
-  background: '#FFF8E1',
-  primary: '#D84315',
-  secondary: '#795548',
-  accent: '#FFA000',
-  text: '#3E2723'
+  background: '#fff',
+  primary: '#3571b4',
+  secondary: '#ffffff',
+  accent: '#034ea2',
+  text: '#034ea2'
 }
 
 export default function ImprovedDocViewer() {
@@ -69,11 +69,6 @@ export default function ImprovedDocViewer() {
     return () => clearTimeout(timer);
   }, []);
 
-  const allTags = useMemo(() => {
-    const tags = new Set<string>()
-    documents.forEach(doc => doc.tags.forEach(tag => tags.add(tag)))
-    return Array.from(tags)
-  }, [documents])
 
   const filteredDocuments = useMemo(() => {
     return documents.filter(doc =>
@@ -113,7 +108,7 @@ export default function ImprovedDocViewer() {
     }, {} as { [key: string]: number });
     return Object.entries(tagCounts)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
+      .slice(0, 5)
       .map(([tag]) => tag);
   }, [documents]);
 
@@ -200,49 +195,38 @@ export default function ImprovedDocViewer() {
                 {tag.split('/').pop()}
               </Button>
             ))}
-            <Dialog>
-              <DialogTrigger asChild>
+            <Popover>
+              <PopoverTrigger asChild>
                 <Button variant="outline" className="text-xs py-1 px-2">
-                  <Tag className="mr-1 h-4 w-4" /> Tag Cloud
+                  Mais Tags <ChevronDown className="ml-1 h-4 w-4" />
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Tag Cloud</DialogTitle>
-                </DialogHeader>
-                <div className="py-4 overflow-auto max-h-[calc(80vh)]">
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 4, duration: 0.5 }}
-                    className="flex gap-2 flex-wrap overflow-y-scroll"
-                  >
-                    {allTags.map((tag, index) => (
-                      <motion.div
-                        key={tag}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 4 + index * 0.1, duration: 0.3 }}
-                        
-                      >
-                        <Button
-                          variant={selectedTags.includes(tag) ? "default" : "outline"}
-                          onClick={() => handleTagToggle(tag)}
-                          className="mb-2"
-                          style={{
-                            backgroundColor: selectedTags.includes(tag) ? autumnColors.accent : 'transparent',
-                            color: selectedTags.includes(tag) ? autumnColors.background : autumnColors.text,
-                            borderColor: autumnColors.accent
-                          }}
-                        >
-                          {tag}
-                        </Button>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                </div>
-              </DialogContent>
-            </Dialog>
+              </PopoverTrigger>
+              <PopoverContent className="w-full">
+                <ScrollArea className="h-72">
+                  {Object.entries(tagGroups).map(([prefix, tags]) => (
+                    <div key={prefix} className="mb-4">
+                      <div className="flex flex-wrap gap-1">
+                        {tags.map(tag => (
+                          <Button
+                            key={tag}
+                            variant={selectedTags.includes(tag) ? "default" : "outline"}
+                            onClick={() => handleTagToggle(tag)}
+                            className="text-xs py-1 px-2"
+                            style={{
+                              backgroundColor: selectedTags.includes(tag) ? autumnColors.accent : 'transparent',
+                              color: selectedTags.includes(tag) ? autumnColors.background : autumnColors.text,
+                              borderColor: autumnColors.accent
+                            }}
+                          >
+                            {tag.split('/').pop()}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </ScrollArea>
+              </PopoverContent>
+            </Popover>
           </motion.div>
         </motion.div>
         <motion.div
@@ -254,6 +238,9 @@ export default function ImprovedDocViewer() {
           <Graph
             documents={filteredDocuments}
             onNodeClick={handleNodeClick}
+            selectedLength={selectedTags.length}
+            topTags={topTags}
+            handleTagToggle={handleTagToggle}
           />
         </motion.div>
         {selectedDocument && (
