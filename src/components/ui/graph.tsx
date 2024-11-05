@@ -163,7 +163,7 @@ const Graph = memo(function Graph({ documents, onNodeClick, selectedLength, topT
                 linkDirectionalParticleSpeed={0.005}
                 linkDirectionalParticleWidth={5}
                 linkDirectionalParticleColor={() => autumnColors.accent}
-                minZoom={selectedLength === 0 ? (mobile() ? 1 : 0.25) : (mobile() ? 0.1 : 1)}
+                minZoom={selectedLength === 0 ? (mobile() ? 0.25 : 0.25) : (mobile() ? 0.5 : 1)}
             />
         </motion.div>
     )
