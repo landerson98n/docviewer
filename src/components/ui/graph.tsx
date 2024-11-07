@@ -30,13 +30,8 @@ const Graph = memo(function Graph({ documents, onNodeClick, selectedLength, topT
     const fgRef = useRef<any>();
     const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
     const containerRef = useRef<HTMLDivElement>(null);
-    const isDesktopOrLaptop = useMediaQuery({
-        query: '(min-width: 1224px)'
-    })
-    const isBigScreen = useMediaQuery({ query: '(min-width: 1824px)' })
     const isTabletOrMobile = useMediaQuery({ query: '(max-width: 1224px)' })
-    const isPortrait = useMediaQuery({ query: '(orientation: portrait)' })
-    const isRetina = useMediaQuery({ query: '(min-resolution: 2dppx)' })
+
 
     const data = useMemo(() => {
         const nodes = documents.map(doc => ({
@@ -76,16 +71,16 @@ const Graph = memo(function Graph({ documents, onNodeClick, selectedLength, topT
             fg.d3Force('link').distance(500);
             fg.d3Force('charge').strength(-1000);
             fg.d3Force('center', forceCenter(window.innerWidth / 2, window.innerHeight / 2));
-            fg.zoom(0.25);
+            fg.zoom(0.12);
         }
     }, []);
 
     useEffect(() => {
         if (fgRef.current) {
             const zoomLevel = selectedLength === 0
-                ? (isTabletOrMobile ? 0.25 : 0.25)
+                ? (isTabletOrMobile ? 0.12 : 0.12)
                 : (isTabletOrMobile ? 0.5 : 1);
-            fgRef.current.zoom(zoomLevel, 400);
+            fgRef.current.zoom(zoomLevel, 4000);
             fgRef.current.centerAt(window.innerWidth / 2, window.innerHeight / 2, 400);
         }
 
@@ -100,7 +95,7 @@ const Graph = memo(function Graph({ documents, onNodeClick, selectedLength, topT
     }
 
     const handleZoom = useCallback((transform: { x: number; y: number; k: number }) => {
-        setTransform({ x: transform.x * 0.05, y: transform.y * 0.05, k: transform.k });
+        setTransform({ x: transform.x * 0.1, y: transform.y * 0.1, k: transform.k });
     }, []);
 
     const tagPositions = useMemo(() => {
@@ -120,21 +115,21 @@ const Graph = memo(function Graph({ documents, onNodeClick, selectedLength, topT
             transition={{ duration: 1 }}
             style={{ width: '100%', height: '100%', position: 'relative' }}
         >
-            {transform.k < 0.3 && selectedLength === 0 && topTags.map((item, index) => (
+            {transform.k < 0.15 && selectedLength === 0 && topTags.map((item, index) => (
                 <Button
                     key={item}
                     onClick={() => handleTagToggle(item)}
                     style={{
                         position: 'absolute',
-                        left: `${tagPositions[index].x + transform.x}px`,
-                        top: `${tagPositions[index].y + transform.y}px`,
-                        transform: `scale(${1 / transform.k * 0.1})`,
+                        left: `${(tagPositions[index].x + -transform.x + 100)}px`,
+                        top: `${tagPositions[index].y + -transform.y + 100}px`,
+                        transform: `scale(${1 / transform.k * 0.03})`,
                         transition: 'left 0.2s, top 0.2s, transform 0.2s',
                         zIndex: 10,
                         backgroundColor: 'transparent',
                         color: '#034ea2',
                         fontSize: `${16 / transform.k}px`,
-                        padding: `${8 / transform.k}px ${12 / transform.k}px`,
+                        padding: `${8 / transform.k}px ${20 / transform.k}px`,
                         width: window.innerWidth / 2
                     }}
                 >
@@ -181,7 +176,7 @@ const Graph = memo(function Graph({ documents, onNodeClick, selectedLength, topT
                 linkDirectionalParticleSpeed={0.005}
                 linkDirectionalParticleWidth={5}
                 linkDirectionalParticleColor={() => autumnColors.accent}
-                minZoom={selectedLength === 0 ? (isTabletOrMobile ? 0.25 : 0.25) : (isTabletOrMobile ? 0.5 : 1)}
+                minZoom={selectedLength === 0 ? (isTabletOrMobile ? 0.12 : 0.12) : (isTabletOrMobile ? 0.5 : 1)}
             />
         </motion.div>
     )
