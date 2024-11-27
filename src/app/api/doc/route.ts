@@ -3,20 +3,20 @@ import { google } from 'googleapis'
 import { Stream } from 'stream'
 
 const oAuth2Client = new google.auth.OAuth2({
-    clientId: '255256262245-2gfrra6riq4fi62ba0lmembsf8org4dt.apps.googleusercontent.com',
-    clientSecret: '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',
+    clientId: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     redirectUri: 'https://localhost',
 });
 
 const authUrl = oAuth2Client.generateAuthUrl({
     access_type: 'offline', 
     scope: ['https://www.googleapis.com/auth/drive'], 
-    client_id: '255256262245-2gfrra6riq4fi62ba0lmembsf8org4dt.apps.googleusercontent.com',
+    client_id: process.env.GOOGLE_CLIENT_ID,
     redirectUri: 'https://localhost',
 });
 
 oAuth2Client.setCredentials({
-    refresh_token: '1//0hWu-iaB5DWErCgYIARAAGBESNwF-L9IrolDTbxUgeeaTjNTSUrdzTkV6CzLRmi16MXAr6IevBXeuF-SDzme3nauSHPzpqf18w3g ',
+    refresh_token:  process.env.GOOGLE_REFRESH_TOKEN,
     scope: 'http://www.googleapis.com/auth/drive',
 });
 
