@@ -4,7 +4,7 @@ import { Stream } from 'stream'
 
 const oAuth2Client = new google.auth.OAuth2({
     clientId: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    clientSecret: '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',
     redirectUri: 'https://localhost',
 });
 
@@ -16,7 +16,7 @@ const authUrl = oAuth2Client.generateAuthUrl({
 });
 
 oAuth2Client.setCredentials({
-    refresh_token:  process.env.GOOGLE_REFRESH_TOKEN,
+    refresh_token: '1//0hWu-iaB5DWErCgYIARAAGBESNwF-L9IrolDTbxUgeeaTjNTSUrdzTkV6CzLRmi16MXAr6IevBXeuF-SDzme3nauSHPzpqf18w3g ',
     scope: 'http://www.googleapis.com/auth/drive',
 });
 
